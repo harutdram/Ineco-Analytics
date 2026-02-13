@@ -100,7 +100,16 @@ docker-compose down -v
 
 ## Production Deployment (Google Cloud)
 
-See deployment instructions in `/docs/DEPLOYMENT.md` (to be created).
+Full guide: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**
+
+Quick start:
+```bash
+# From your local machine (with gcloud CLI)
+bash deploy/create-gce-vm.sh
+
+# Then SSH to VM and run:
+bash deploy/setup-vm.sh
+```
 
 ## Security Notes
 
