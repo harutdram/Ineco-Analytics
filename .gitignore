@@ -1,0 +1,43 @@
+# Environment files (contain secrets!)
+.env
+*.env.local
+
+# Google Cloud credentials (NEVER commit these!)
+credentials/
+*.json
+!package.json
+
+# Docker volumes
+postgres_data/
+redis_data/
+superset_home/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temp files
+tmp/
+temp/
+*.tmp
