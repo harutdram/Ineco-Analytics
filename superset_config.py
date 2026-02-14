@@ -66,8 +66,14 @@ class CeleryConfig:
 
 CELERY_CONFIG = CeleryConfig
 
-# Enable async queries
-RESULTS_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
+# Enable async queries - use RedisCache for results backend
+from flask_caching.backends.rediscache import RedisCache
+RESULTS_BACKEND = RedisCache(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    db=REDIS_RESULTS_DB,
+    key_prefix="superset_results_"
+)
 
 # =============================================================================
 # BIGQUERY CONFIGURATION
@@ -98,6 +104,9 @@ FEATURE_FLAGS = {
 # =============================================================================
 # SECURITY CONFIGURATION
 # =============================================================================
+
+# Disable Talisman CSP for development (re-enable for production with proper config)
+TALISMAN_ENABLED = False
 
 # Enable CSRF protection
 WTF_CSRF_ENABLED = True

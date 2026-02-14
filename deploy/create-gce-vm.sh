@@ -8,7 +8,7 @@ set -e
 PROJECT_ID="${GCP_PROJECT:-ineco-analytics}"
 ZONE="${GCP_ZONE:-us-central1-a}"
 VM_NAME="${VM_NAME:-superset-vm}"
-MACHINE_TYPE="${MACHINE_TYPE:-e2-standard-2}"
+MACHINE_TYPE="${MACHINE_TYPE:-e2-standard-2}"  # Good for start; upgrade to e2-standard-4 if needed
 
 echo "=== Creating GCE VM for INECOBANK Superset ==="
 echo "Project: $PROJECT_ID"

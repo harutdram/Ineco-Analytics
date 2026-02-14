@@ -2,40 +2,24 @@
 // Sets the browser tab title
 
 (function() {
-    const brandName = 'INECOBANK Growth Marketing';
+    var brandName = 'INECOBANK Growth Marketing';
     
-    // Set initial title
-    if (!document.title || document.title.trim() === '') {
-        document.title = brandName;
-    }
-    
-    // Observer to update title if React changes it
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' && mutation.target === document.querySelector('head')) {
-                const titleElement = document.querySelector('title');
-                if (titleElement && (!titleElement.textContent || titleElement.textContent.trim() === '')) {
-                    titleElement.textContent = brandName;
-                }
-            }
-        });
-    });
-    
-    // Observe head for title changes
-    if (document.head) {
-        observer.observe(document.head, { childList: true, subtree: true });
-    }
-    
-    // Also set on DOMContentLoaded and load
-    document.addEventListener('DOMContentLoaded', function() {
-        if (!document.title || document.title.trim() === '') {
+    function setCorrectTitle() {
+        var t = document.title || '';
+        if (!t.trim() || t.includes('localhost') || t === 'Superset') {
             document.title = brandName;
         }
-    });
+    }
     
-    window.addEventListener('load', function() {
-        if (!document.title || document.title.trim() === '') {
-            document.title = brandName;
-        }
-    });
+    setCorrectTitle();
+    
+    // Override whenever title changes (React overwrites it)
+    var titleEl = document.querySelector('title');
+    if (titleEl) {
+        var observer = new MutationObserver(setCorrectTitle);
+        observer.observe(titleEl, { childList: true, characterData: true, subtree: true });
+    }
+    
+    // Also poll as fallback
+    setInterval(setCorrectTitle, 500);
 })();

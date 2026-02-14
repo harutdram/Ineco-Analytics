@@ -9,7 +9,7 @@ USER root
 # - shillelagh[gsheetsapi]: Google Sheets driver
 RUN uv pip install --python /app/.venv/bin/python \
     psycopg2-binary \
-    sqlalchemy-bigquery \
+    "sqlalchemy-bigquery>=1.15.0,<2.0.0" \
     "shillelagh[gsheetsapi]"
 
 USER superset
