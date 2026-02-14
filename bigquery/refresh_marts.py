@@ -63,7 +63,7 @@ REFRESH_QUERIES = {
 
     'mart_acquisition': """
         CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_acquisition` AS
-        SELECT event_date, channel_group, source, medium, campaign,
+        SELECT event_date, channel_group, source_clean AS source, medium, campaign,
           COUNT(DISTINCT user_pseudo_id) AS users,
           COUNT(DISTINCT CASE WHEN event_name = 'first_visit' THEN user_pseudo_id END) AS new_users,
           COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(session_id AS STRING))) AS sessions,
@@ -79,7 +79,7 @@ REFRESH_QUERIES = {
 
     'mart_funnel': """
         CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_funnel` AS
-        SELECT event_date, channel_group, source, campaign,
+        SELECT event_date, channel_group, source_clean AS source, campaign,
           COUNT(DISTINCT CASE WHEN event_name = 'page_view' THEN user_pseudo_id END) AS step_1_visitors,
           COUNT(DISTINCT CASE WHEN event_name IN ('sprint_apply_button_click', 'reg_apply_button_click') THEN user_pseudo_id END) AS step_2_apply_click,
           COUNT(DISTINCT CASE WHEN event_name IN ('Get Sub ID sprint', 'Get Sub ID') THEN user_pseudo_id END) AS step_3_sub_id,
@@ -114,7 +114,7 @@ REFRESH_QUERIES = {
 
     'mart_campaign_performance': """
         CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_campaign_performance` AS
-        SELECT event_date, channel_group, source, medium, campaign,
+        SELECT event_date, channel_group, source_clean AS source, medium, campaign,
           COUNT(DISTINCT user_pseudo_id) AS users,
           COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(session_id AS STRING))) AS sessions,
           COUNTIF(event_name = 'page_view') AS pageviews,
@@ -166,7 +166,7 @@ REFRESH_QUERIES = {
 
     'mart_gm_campaign_daily': """
         CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_gm_campaign_daily` AS
-        SELECT event_date, channel_group, source, campaign,
+        SELECT event_date, channel_group, source_clean AS source, campaign,
           COUNT(DISTINCT user_pseudo_id) AS users,
           COUNT(DISTINCT CASE WHEN event_name = 'first_visit' THEN user_pseudo_id END) AS new_users,
           COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(session_id AS STRING))) AS sessions,
@@ -186,7 +186,7 @@ REFRESH_QUERIES = {
 
     'mart_gm_funnel': """
         CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_gm_funnel` AS
-        SELECT event_date, channel_group, source,
+        SELECT event_date, channel_group, source_clean AS source,
           COUNT(DISTINCT CASE WHEN event_name = 'page_view' THEN user_pseudo_id END) AS step1_visitors,
           COUNT(DISTINCT CASE WHEN event_name = 'page_view' AND product_category NOT IN ('Other', 'Homepage', 'Support & Info') THEN user_pseudo_id END) AS step2_product_viewers,
           COUNT(DISTINCT CASE WHEN event_name IN ('sprint_apply_button_click', 'reg_apply_button_click') THEN user_pseudo_id END) AS step3_apply_click,
