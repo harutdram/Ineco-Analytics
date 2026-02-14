@@ -123,6 +123,124 @@ REFRESH_QUERIES = {
         GROUP BY 1, 2, 3, 4, 5
         HAVING sessions > 10
         ORDER BY event_date DESC, users DESC
+    """,
+    
+    # ============ GROWTH MARKETING TABLES ============
+    
+    "mart_gm_channel_daily": """
+        CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_gm_channel_daily` AS
+        WITH ga_data AS (
+          SELECT
+            event_date, channel_group,
+            COUNT(DISTINCT user_pseudo_id) AS users,
+            COUNT(DISTINCT CASE WHEN event_name = 'first_visit' THEN user_pseudo_id END) AS new_users,
+            COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(session_id AS STRING))) AS sessions,
+            COUNTIF(event_name = 'page_view') AS pageviews,
+            ROUND(AVG(CASE WHEN engagement_time_msec > 0 THEN engagement_time_msec END) / 1000, 2) AS avg_session_duration_sec,
+            COUNTIF(event_name = 'check_limit_click') AS check_limit_clicks,
+            COUNTIF(event_name = 'sprint_apply_button_click') AS applications,
+            COUNTIF(event_name = 'Get Sub ID sprint') AS applications_started,
+            COUNTIF(event_name IN ('phone_submited_reg', 'phone_submited_sprint')) AS phone_submissions,
+            COUNTIF(event_name = 'register_funnel') AS registrations_started,
+            COUNTIF(event_name = 'registration_success') AS registrations_completed
+          FROM `x-victor-477214-g0.ineco_staging.stg_events`
+          GROUP BY 1, 2
+        ),
+        spend_data AS (
+          SELECT date AS event_date, channel AS channel_group,
+            SUM(impressions) AS impressions, SUM(clicks) AS paid_clicks, SUM(cost) AS spend
+          FROM `x-victor-477214-g0.ineco_raw.ad_spend`
+          GROUP BY 1, 2
+        )
+        SELECT g.*, 
+          SAFE_DIVIDE(g.check_limit_clicks, g.sessions) AS rate_session_to_check_limit,
+          SAFE_DIVIDE(g.applications, g.sessions) AS rate_session_to_apply,
+          SAFE_DIVIDE(g.applications, g.check_limit_clicks) AS rate_check_to_apply,
+          SAFE_DIVIDE(g.registrations_completed, g.applications) AS rate_apply_to_register,
+          SAFE_DIVIDE(g.registrations_completed, g.sessions) AS rate_session_to_register,
+          COALESCE(s.impressions, 0) AS impressions, COALESCE(s.paid_clicks, 0) AS paid_clicks, COALESCE(s.spend, 0) AS spend,
+          SAFE_DIVIDE(s.spend, g.sessions) AS cost_per_session,
+          SAFE_DIVIDE(s.spend, g.applications) AS cost_per_application,
+          SAFE_DIVIDE(s.spend, g.registrations_completed) AS cost_per_registration,
+          SAFE_DIVIDE(s.spend, s.paid_clicks) AS cpc
+        FROM ga_data g
+        LEFT JOIN spend_data s ON g.event_date = s.event_date AND LOWER(g.channel_group) = LOWER(s.channel_group)
+        ORDER BY g.event_date DESC, g.users DESC
+    """,
+    
+    "mart_gm_campaign_daily": """
+        CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_gm_campaign_daily` AS
+        WITH ga_data AS (
+          SELECT event_date, channel_group, source, medium, campaign,
+            COUNT(DISTINCT user_pseudo_id) AS users,
+            COUNT(DISTINCT CASE WHEN event_name = 'first_visit' THEN user_pseudo_id END) AS new_users,
+            COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(session_id AS STRING))) AS sessions,
+            COUNTIF(event_name = 'page_view') AS pageviews,
+            COUNTIF(event_name = 'check_limit_click') AS check_limit_clicks,
+            COUNTIF(event_name = 'sprint_apply_button_click') AS applications,
+            COUNTIF(event_name IN ('phone_submited_reg', 'phone_submited_sprint')) AS phone_submissions,
+            COUNTIF(event_name = 'registration_success') AS registrations_completed
+          FROM `x-victor-477214-g0.ineco_staging.stg_events`
+          WHERE campaign IS NOT NULL
+          GROUP BY 1, 2, 3, 4, 5
+        ),
+        spend_data AS (
+          SELECT date AS event_date, campaign_name,
+            SUM(impressions) AS impressions, SUM(clicks) AS paid_clicks, SUM(cost) AS spend
+          FROM `x-victor-477214-g0.ineco_raw.ad_spend`
+          GROUP BY 1, 2
+        )
+        SELECT g.*,
+          SAFE_DIVIDE(g.applications, g.sessions) AS cvr_session_to_apply,
+          SAFE_DIVIDE(g.registrations_completed, g.applications) AS cvr_apply_to_register,
+          SAFE_DIVIDE(g.registrations_completed, g.sessions) AS cvr_overall,
+          COALESCE(s.impressions, 0) AS impressions, COALESCE(s.paid_clicks, 0) AS paid_clicks, COALESCE(s.spend, 0) AS spend,
+          SAFE_DIVIDE(s.spend, g.applications) AS cpa_application,
+          SAFE_DIVIDE(s.spend, g.registrations_completed) AS cpa_registration,
+          SAFE_DIVIDE(s.spend, s.paid_clicks) AS cpc
+        FROM ga_data g
+        LEFT JOIN spend_data s ON g.event_date = s.event_date AND g.campaign = s.campaign_name
+        WHERE g.sessions >= 5
+        ORDER BY g.event_date DESC, g.users DESC
+    """,
+    
+    "mart_gm_funnel": """
+        CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_gm_funnel` AS
+        SELECT event_date, channel_group, source,
+          COUNT(DISTINCT CASE WHEN event_name = 'page_view' THEN user_pseudo_id END) AS step1_visitors,
+          COUNT(DISTINCT CASE WHEN event_name = 'page_view' AND product_category != 'other' THEN user_pseudo_id END) AS step2_product_viewers,
+          COUNT(DISTINCT CASE WHEN event_name = 'check_limit_click' THEN user_pseudo_id END) AS step3_check_limit,
+          COUNT(DISTINCT CASE WHEN event_name = 'sprint_apply_button_click' THEN user_pseudo_id END) AS step4_apply_click,
+          COUNT(DISTINCT CASE WHEN event_name = 'Get Sub ID sprint' THEN user_pseudo_id END) AS step5_app_started,
+          COUNT(DISTINCT CASE WHEN event_name IN ('phone_submited_reg', 'phone_submited_sprint') THEN user_pseudo_id END) AS step6_phone_submitted,
+          COUNT(DISTINCT CASE WHEN event_name = 'register_funnel' THEN user_pseudo_id END) AS step7_reg_started,
+          COUNT(DISTINCT CASE WHEN event_name = 'registration_success' THEN user_pseudo_id END) AS step8_reg_completed,
+          SAFE_DIVIDE(COUNT(DISTINCT CASE WHEN event_name = 'check_limit_click' THEN user_pseudo_id END),
+            COUNT(DISTINCT CASE WHEN event_name = 'page_view' THEN user_pseudo_id END)) AS rate_1_to_3,
+          SAFE_DIVIDE(COUNT(DISTINCT CASE WHEN event_name = 'sprint_apply_button_click' THEN user_pseudo_id END),
+            COUNT(DISTINCT CASE WHEN event_name = 'check_limit_click' THEN user_pseudo_id END)) AS rate_3_to_4,
+          SAFE_DIVIDE(COUNT(DISTINCT CASE WHEN event_name = 'registration_success' THEN user_pseudo_id END),
+            COUNT(DISTINCT CASE WHEN event_name = 'sprint_apply_button_click' THEN user_pseudo_id END)) AS rate_4_to_8
+        FROM `x-victor-477214-g0.ineco_staging.stg_events`
+        GROUP BY 1, 2, 3
+        ORDER BY event_date DESC, step1_visitors DESC
+    """,
+    
+    "mart_gm_product": """
+        CREATE OR REPLACE TABLE `x-victor-477214-g0.ineco_marts.mart_gm_product` AS
+        SELECT event_date, channel_group, product_category,
+          COUNT(DISTINCT user_pseudo_id) AS users,
+          COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(session_id AS STRING))) AS sessions,
+          COUNTIF(event_name = 'page_view') AS pageviews,
+          COUNTIF(event_name = 'check_limit_click') AS check_limit_clicks,
+          COUNTIF(event_name IN ('sprint_apply_button_click', 'cards_apply_button', 'apply_button_click')) AS applications,
+          COUNTIF(event_name = 'registration_success') AS registrations,
+          SAFE_DIVIDE(COUNTIF(event_name IN ('sprint_apply_button_click', 'cards_apply_button', 'apply_button_click')),
+            COUNT(DISTINCT user_pseudo_id)) AS conversion_rate
+        FROM `x-victor-477214-g0.ineco_staging.stg_events`
+        WHERE product_category != 'other'
+        GROUP BY 1, 2, 3
+        ORDER BY event_date DESC, users DESC
     """
 }
 
