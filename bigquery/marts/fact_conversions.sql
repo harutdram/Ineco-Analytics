@@ -39,10 +39,12 @@ SELECT
   -- CARDS/DEPOSITS FUNNEL (Registration flow)
   -- Step 1: Page view on cards/deposits pages
   COUNT(DISTINCT CASE WHEN event_name = 'page_view' AND product_category IN ('Cards', 'Deposits') THEN user_pseudo_id END) as cards_deposits_pageview,
-  -- Step 2: Click registration apply button
-  COUNT(DISTINCT CASE WHEN event_name = 'Reg_apply_button_click' THEN user_pseudo_id END) as cards_deposits_apply_click,
+  -- Step 2: Click registration apply button (multiple event names)
+  COUNT(DISTINCT CASE WHEN event_name IN ('reg_apply_button_click', 'cards_apply_button', 'apply_button_click') THEN user_pseudo_id END) as cards_deposits_apply_click,
   -- Step 3: Get Sub ID
   COUNT(DISTINCT CASE WHEN event_name = 'Get Sub ID' THEN user_pseudo_id END) as cards_deposits_sub_id,
+  -- Step 4: Phone submitted
+  COUNT(DISTINCT CASE WHEN event_name = 'phone_submited_reg' THEN user_pseudo_id END) as cards_deposits_phone_submit,
   
   -- FINAL CONVERSION (both funnels)
   COUNT(DISTINCT CASE WHEN event_name = 'registration_success' THEN user_pseudo_id END) as registrations
