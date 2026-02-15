@@ -56,140 +56,164 @@ WITH base AS (
 SELECT
   *,
 
-  -- CHANNEL GROUPING (clean)
+  -- SOURCE CLEAN (standardized source names)
+  -- Groups raw traffic sources into clean categories
   CASE
-    -- Direct
+    -- Direct traffic
     WHEN source = '(direct)' THEN 'Direct'
+    
+    -- Search engines
+    WHEN source = 'google' THEN 'Google'
+    WHEN source = 'bing' THEN 'Bing'
+    WHEN source LIKE '%yahoo%' THEN 'Yahoo'
+    WHEN source LIKE '%yandex%' OR source LIKE 'ya.%' THEN 'Yandex'
+    
+    -- Ad networks
+    WHEN source LIKE 'NN%' OR source LIKE 'nn%' THEN 'NN Ads'
+    WHEN source IN ('fb', 'ig', 'facebook', 'instagram', 'FB')
+         OR source LIKE '%Meta%' OR source LIKE '%meta%'
+         OR source LIKE '%facebook%' OR source LIKE '%instagram%'
+         OR source LIKE 'fb_%' OR source LIKE 'fb-%' 
+         OR source LIKE '%fbads%' OR source LIKE '%FBads%' THEN 'Meta'
+    WHEN source LIKE '%MS_%' OR source LIKE '%MS-%' 
+         OR source LIKE 'ms_%' OR source LIKE 'ms-%'
+         OR source = 'ms_network' OR source = 'MS' OR source = 'ms'
+         OR source LIKE '%mediasystem%' OR source LIKE '%MediaSystem%' THEN 'MS Network'
+    WHEN source LIKE '%Native%' OR source LIKE '%native%' THEN 'Native Ads'
+    WHEN source LIKE '%intent%' OR source LIKE '%Intent%' THEN 'Intent Ads'
+    WHEN source LIKE '%prodigi%' OR source LIKE '%Prodigi%' THEN 'Prodigi Ads'
+    WHEN source = 'adfox' THEN 'Adfox'
+    WHEN source LIKE '%linkedin%' OR source LIKE '%lnkd%' OR source = 'LinkedIn_ads' THEN 'LinkedIn'
+    
+    -- Messaging channels
+    WHEN source IN ('email', 'sfmc', 'Mailing', 'mailing') 
+         OR source LIKE '%mail.%' OR source LIKE '%.mail.%'
+         OR medium = 'email' THEN 'Email'
+    WHEN source = 'SMS' OR source LIKE '%sms%' THEN 'SMS'
+    WHEN LOWER(source) LIKE '%viber%' THEN 'Viber'
+    WHEN source LIKE '%telegram%' OR source = 'Telegram' THEN 'Telegram'
+    
+    -- Surveys
+    WHEN source LIKE '%survey%' THEN 'Survey'
+    
+    -- Promotions
+    WHEN source LIKE '%Mastercard%' OR source LIKE '%mastercard%' THEN 'Mastercard Promo'
+    
+    -- Internal traffic
+    WHEN source LIKE '%inecobank%' OR source = 'landing' OR source = 'inecobank' THEN 'Internal'
+    
+    -- Armenian referrals
+    WHEN source LIKE '%.am' OR source LIKE '%.am:%' THEN 'Armenian Sites'
+    
+    -- AI referrals
+    WHEN source LIKE 'chatgpt%' OR source LIKE 'claude%' OR source LIKE 'gemini%' 
+         OR source LIKE 'copilot%' OR source LIKE 'perplexity%' THEN 'AI Tools'
+    
+    -- Data not available
+    WHEN source = '(not set)' OR source IS NULL THEN 'Data Not Available'
+    
+    -- Catch-all for uncategorized sources
+    ELSE 'Other'
+  END AS source_clean,
 
-    -- Google
+  -- CHANNEL GROUPING (marketing channel with paid/organic split)
+  -- More detailed than source_clean, splits by medium
+  CASE
+    WHEN source = '(direct)' THEN 'Direct'
+    
+    -- Google (split by paid/organic)
     WHEN source = 'google' AND medium = 'cpc' THEN 'Google Ads'
     WHEN source = 'google' AND medium = 'organic' THEN 'Google Organic'
-
-    -- Meta (Facebook, Instagram)
-    WHEN source LIKE '%Meta%'
-         OR source IN ('facebook', 'fb', 'instagram', 'ig')
-         OR source LIKE '%instagram%'
-         OR source LIKE 'm.facebook%' THEN 'Meta Ads'
-
-    -- NN Ads Network (all variations)
-    WHEN source LIKE 'NN%'
-         OR source LIKE 'nn%' THEN 'NN Ads'
-
-    -- MS Network (Microsoft/Bing)
-    WHEN source LIKE '%MS_%'
-         OR source LIKE '%MS-%'
-         OR source LIKE 'ms_%'
-         OR source LIKE 'ms-%'
-         OR source = 'ms_network'
-         OR source LIKE '%msv%'
-         OR source LIKE '%msvisa%' THEN 'MS Network'
-
-    -- Native Ads
-    WHEN source LIKE '%Native%'
-         OR source LIKE '%native%' THEN 'Native Ads'
-
-    -- Intent Ads
-    WHEN source LIKE '%intent%'
-         OR source LIKE '%Intent%' THEN 'Intent Ads'
-
-    -- Email (including Salesforce Marketing Cloud)
-    WHEN source = 'email'
-         OR source = 'sfmc'
-         OR medium = 'email' THEN 'Email'
-
-    -- SMS
-    WHEN source = 'SMS'
-         OR source LIKE '%sms%' THEN 'SMS'
-
-    -- Viber
-    WHEN LOWER(source) LIKE '%viber%' THEN 'Viber'
-
-    -- Yandex
-    WHEN source = 'yandex'
-         OR source LIKE '%yandex%' THEN 'Yandex'
-
-    -- Bing Organic
-    WHEN source = 'bing' AND medium = 'organic' THEN 'Bing Organic'
-
-    -- Referral
-    WHEN medium = 'referral' THEN 'Referral'
-
-    -- Adfox (video ads)
+    
+    -- Meta (Facebook/Instagram ads)
+    WHEN source LIKE '%Meta%' OR source IN ('facebook', 'fb', 'instagram', 'ig', 'FB')
+         OR source LIKE '%instagram%' OR source LIKE '%facebook%'
+         OR source LIKE 'fb_%' OR source LIKE '%fbads%' THEN 'Meta Ads'
+    
+    -- Ad networks
+    WHEN source LIKE 'NN%' OR source LIKE 'nn%' THEN 'NN Ads'
+    WHEN source LIKE '%MS_%' OR source LIKE '%MS-%' OR source LIKE 'ms_%'
+         OR source LIKE 'ms-%' OR source = 'ms_network' OR source = 'MS'
+         OR source LIKE '%mediasystem%' OR source LIKE '%MediaSystem%' THEN 'MS Network'
+    WHEN source LIKE '%Native%' OR source LIKE '%native%' THEN 'Native Ads'
+    WHEN source LIKE '%intent%' OR source LIKE '%Intent%' THEN 'Intent Ads'
+    WHEN source LIKE '%prodigi%' OR source LIKE '%Prodigi%' THEN 'Prodigi Ads'
     WHEN source = 'adfox' THEN 'Adfox Video'
-
+    WHEN source LIKE '%linkedin%' OR source LIKE '%lnkd%' OR source = 'LinkedIn_ads' THEN 'LinkedIn'
+    
+    -- Messaging channels
+    WHEN source IN ('email', 'sfmc', 'Mailing', 'mailing') 
+         OR source LIKE '%mail.%' OR medium = 'email' THEN 'Email'
+    WHEN source = 'SMS' OR source LIKE '%sms%' THEN 'SMS'
+    WHEN LOWER(source) LIKE '%viber%' THEN 'Viber'
+    WHEN source LIKE '%telegram%' OR source = 'Telegram' THEN 'Telegram'
+    
+    -- Search engines
+    WHEN source LIKE '%yandex%' OR source LIKE 'ya.%' THEN 'Yandex'
+    WHEN source = 'bing' AND medium = 'organic' THEN 'Bing Organic'
+    WHEN source LIKE '%yahoo%' THEN 'Yahoo'
+    
+    -- Survey traffic
+    WHEN source LIKE '%survey%' THEN 'Survey'
+    
+    -- Referral traffic
+    WHEN medium = 'referral' THEN 'Referral'
+    
+    -- Catch-all
     ELSE 'Other'
   END AS channel_group,
 
-  -- PRODUCT CATEGORY (FIXED - better pattern matching)
+  -- PRODUCT CATEGORY (based on page URL)
+  -- Classifies pages by Ineco product/service
   CASE
-    -- Support/Info FIRST (before other categories that might overlap)
-    WHEN page_location LIKE '%/contact-us%'
-         OR page_location LIKE '%/contact%'
-         OR page_location LIKE '%/faq%'
-         OR page_location LIKE '%/about-inecobank%'
-         OR page_location LIKE '%/useful-information%'
-         OR page_location LIKE '%/career%'
-         OR page_location LIKE '%/press-center%'
-         OR page_location LIKE '%/shareholders%'
-         OR page_location LIKE '%/corporate-governance%'
-         OR page_location LIKE '%/reports%' THEN 'Support & Info'
-
-    -- Consumer Loans (1-click, sprint, refinance)
-    WHEN page_location LIKE '%consumer-loans%'
-         OR page_location LIKE '%1-click%'
-         OR page_location LIKE '%sprint%'
-         OR page_location LIKE '%refinance%'
+    -- Support/Info pages (check first to avoid overlap)
+    WHEN page_location LIKE '%/contact-us%' OR page_location LIKE '%/contact%'
+         OR page_location LIKE '%/faq%' OR page_location LIKE '%/about-inecobank%'
+         OR page_location LIKE '%/useful-information%' OR page_location LIKE '%/career%'
+         OR page_location LIKE '%/press-center%' OR page_location LIKE '%/shareholders%'
+         OR page_location LIKE '%/corporate-governance%' OR page_location LIKE '%/reports%' THEN 'Support & Info'
+    
+    -- Loan products
+    WHEN page_location LIKE '%consumer-loans%' OR page_location LIKE '%1-click%'
+         OR page_location LIKE '%sprint%' OR page_location LIKE '%refinance%'
          OR page_location LIKE '%refinans%' THEN 'Consumer Loans'
-
-    -- Car Loans
-    WHEN page_location LIKE '%car-loan%'
-         OR page_location LIKE '%avtovark%' THEN 'Car Loans'
-
-    -- Mortgage
+    WHEN page_location LIKE '%car-loan%' OR page_location LIKE '%avtovark%' THEN 'Car Loans'
     WHEN page_location LIKE '%mortgage%' THEN 'Mortgage'
-
-    -- Deposits
+    
+    -- Deposit products
     WHEN page_location LIKE '%deposit%' THEN 'Deposits'
-
-    -- Cards
-    WHEN page_location LIKE '%card%'
-         OR page_location LIKE '%visa%'
-         OR page_location LIKE '%mastercard%'
-         OR page_location LIKE '%Mastercard%' THEN 'Cards'
-
-    -- Digital Banking
-    WHEN page_location LIKE '%inecomobile%'
-         OR page_location LIKE '%inecoonline%' THEN 'Digital Banking'
-
-    -- Accounts
+    
+    -- Card products
+    WHEN page_location LIKE '%card%' OR page_location LIKE '%visa%'
+         OR page_location LIKE '%mastercard%' OR page_location LIKE '%Mastercard%' THEN 'Cards'
+    
+    -- Digital banking
+    WHEN page_location LIKE '%inecomobile%' OR page_location LIKE '%inecoonline%' THEN 'Digital Banking'
+    
+    -- Account services
     WHEN page_location LIKE '%account%' THEN 'Accounts'
-
-    -- Business Banking
-    WHEN page_location LIKE '%/Business%'
-         OR page_location LIKE '%/business%' THEN 'Business'
-
-    -- Salary Project
+    
+    -- Business banking
+    WHEN page_location LIKE '%/Business%' OR page_location LIKE '%/business%' THEN 'Business'
+    
+    -- Salary project
     WHEN page_location LIKE '%salary%' THEN 'Salary Project'
-
-    -- Campaigns/Promos
-    WHEN page_location LIKE '%christmas%'
-         OR page_location LIKE '%black-friday%'
-         OR page_location LIKE '%cyber-monday%'
-         OR page_location LIKE '%pascali%'
+    
+    -- Seasonal campaigns
+    WHEN page_location LIKE '%christmas%' OR page_location LIKE '%black-friday%'
+         OR page_location LIKE '%cyber-monday%' OR page_location LIKE '%pascali%'
          OR page_location LIKE '%new-year%' THEN 'Campaigns'
-
+    
     -- Homepage
-    WHEN page_location LIKE '%inecobank.am/hy%'
-         OR page_location LIKE '%inecobank.am/en%'
+    WHEN page_location LIKE '%inecobank.am/hy%' OR page_location LIKE '%inecobank.am/en%'
          OR page_location LIKE '%inecobank.am/ru%'
          OR REGEXP_CONTAINS(page_location, r'inecobank\.am/?$') THEN 'Homepage'
-
-    -- User Account
-    WHEN page_location LIKE '%user-info%'
-         OR page_location LIKE '%personal-info%'
-         OR page_location LIKE '%provision%'
-         OR page_location LIKE '%sign-in%' THEN 'User Account'
-
+    
+    -- User account pages
+    WHEN page_location LIKE '%user-info%' OR page_location LIKE '%personal-info%'
+         OR page_location LIKE '%provision%' OR page_location LIKE '%sign-in%' THEN 'User Account'
+    
+    -- Catch-all
     ELSE 'Other'
   END AS product_category
 
