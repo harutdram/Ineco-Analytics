@@ -1,0 +1,20 @@
+period,metric,channel,product,target_value,notes
+2026-02-01,revenue,all,all,1100000000,Overall monthly revenue target (AMD)
+2026-02-01,revenue,all,loan,800000000,Loan revenue target
+2026-02-01,revenue,all,card,200000000,Card revenue target
+2026-02-01,revenue,all,deposit,100000000,Deposit revenue target
+2026-02-01,approved,all,all,380,Total approved applications
+2026-02-01,approved,all,loan,250,Approved loans
+2026-02-01,approved,all,card,100,Approved cards
+2026-02-01,approved,all,deposit,30,Opened deposits
+2026-02-01,cpa,google_ads,all,120,Target CPA for Google Ads (USD)
+2026-02-01,cpa,meta_ads,all,100,Target CPA for Meta Ads (USD)
+2026-02-01,cpa,all,all,110,Overall target CPA (USD)
+2026-02-01,roas,google_ads,all,2.5,Target ROAS for Google
+2026-02-01,roas,meta_ads,all,3.0,Target ROAS for Meta
+2026-02-01,roas,all,all,2.8,Overall target ROAS
+2026-02-01,approval_rate,all,all,55,Target approval rate (%)
+2026-02-01,approval_rate,all,loan,60,Loan approval rate target (%)
+2026-02-01,approval_rate,all,card,50,Card approval rate target (%)
+2026-03-01,revenue,all,all,1200000000,March revenue target (AMD)
+2026-03-01,approved,all,all,420,March approved target

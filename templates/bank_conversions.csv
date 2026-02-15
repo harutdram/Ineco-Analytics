@@ -1,0 +1,11 @@
+application_id,user_id,product_type,apply_date,apply_source,apply_campaign,status,approval_date,rejection_reason,approved_amount_amd,revenue_amd,notes
+APP-2026-001234,USR-567890,loan,2026-02-01,google,prolongation,approved,2026-02-04,,5000000,125000,Sprint loan approved
+APP-2026-001235,USR-567891,loan,2026-02-01,meta,cube,approved,2026-02-05,,3000000,75000,1-click loan
+APP-2026-001236,USR-567892,loan,2026-02-01,direct,,rejected,2026-02-03,low_credit_score,0,0,Failed credit check
+APP-2026-001237,USR-567893,loan,2026-02-01,organic,,pending,,,0,0,Still processing
+APP-2026-001238,USR-567894,card,2026-02-02,google,gmail-sept,approved,2026-02-06,,500000,15000,Credit card issued
+APP-2026-001239,USR-567895,card,2026-02-02,meta,1-click,approved,2026-02-07,,300000,9000,Debit card
+APP-2026-001240,USR-567896,deposit,2026-02-02,direct,,approved,2026-02-03,,10000000,50000,Term deposit opened
+APP-2026-001241,USR-567897,loan,2026-02-03,meta,prolongation,approved,2026-02-07,,4500000,112500,Refinance
+APP-2026-001242,USR-567898,loan,2026-02-03,google,remarketing,rejected,2026-02-05,insufficient_income,0,0,Income verification failed
+APP-2026-001243,USR-567899,card,2026-02-03,referral,,approved,2026-02-08,,400000,12000,Referred by existing customer

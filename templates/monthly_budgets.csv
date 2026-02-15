@@ -1,0 +1,13 @@
+period,channel,monthly_budget_usd,daily_budget_usd,notes
+2026-02-01,google_ads,15000,535,Google Ads February budget
+2026-02-01,meta_ads,12000,428,Meta (Facebook/Instagram) February budget
+2026-02-01,linkedin,3000,107,LinkedIn February budget
+2026-02-01,yandex,2000,71,Yandex February budget
+2026-02-01,local_networks,5000,178,NN Ads + other local networks
+2026-02-01,email,500,18,Email marketing costs
+2026-02-01,sms,1000,36,SMS campaign costs
+2026-03-01,google_ads,18000,580,Google Ads March budget (increased)
+2026-03-01,meta_ads,15000,484,Meta March budget (increased)
+2026-03-01,linkedin,3000,97,LinkedIn March budget
+2026-03-01,yandex,2000,65,Yandex March budget
+2026-03-01,local_networks,5000,161,Local networks March budget

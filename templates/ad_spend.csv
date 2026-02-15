@@ -1,0 +1,12 @@
+date,channel,campaign,adset,creative,impressions,clicks,spend_usd,spend_amd
+2026-02-01,google_ads,prolongation,adset_loans_25-34,text_ad_v1,45234,1234,156.78,62712
+2026-02-01,google_ads,prolongation,adset_loans_35-44,text_ad_v1,38123,987,134.56,53824
+2026-02-01,google_ads,remarketing,retarget_7d,dynamic_ad,23456,567,89.12,35648
+2026-02-01,meta_ads,cube,lookalike_1pct,video_30s,156789,3456,234.56,93824
+2026-02-01,meta_ads,cube,interest_finance,carousel_v2,98765,2345,187.34,74936
+2026-02-01,meta_ads,1-click,broad_25-55,single_image,67890,1890,145.67,58268
+2026-02-01,linkedin,b2b_deposits,job_titles_finance,sponsored_content,12345,234,89.00,35600
+2026-02-02,google_ads,prolongation,adset_loans_25-34,text_ad_v1,48765,1345,167.89,67156
+2026-02-02,google_ads,prolongation,adset_loans_35-44,text_ad_v1,41234,1056,145.23,58092
+2026-02-02,meta_ads,cube,lookalike_1pct,video_30s,167890,3678,256.78,102712
+2026-02-02,meta_ads,cube,interest_finance,carousel_v2,102345,2567,198.45,79380
