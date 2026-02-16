@@ -3,19 +3,20 @@
 ## What We Built
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                      │
-│    INECO MARKETING ANALYTICS PLATFORM                               │
-│                                                                      │
-│    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    │
-│    │  GA4     │    │ BigQuery │    │ Superset │    │  Users   │    │
-│    │  Data    │───►│   DWH    │───►│Dashboards│───►│          │    │
-│    └──────────┘    └──────────┘    └──────────┘    └──────────┘    │
-│                                                                      │
-│    Google          Google          Apache          Marketing        │
-│    Analytics       Cloud           Superset        Team             │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│    INECO MARKETING ANALYTICS PLATFORM                                        │
+│                                                                               │
+│    ┌────────┐    ┌─────────┐    ┌──────────┐    ┌──────────┐    ┌────────┐  │
+│    │  Data  │    │ Airbyte │    │ BigQuery │    │ Superset │    │ Users  │  │
+│    │Sources │───►│   ETL   │───►│   DWH    │───►│Dashboards│───►│        │  │
+│    └────────┘    └─────────┘    └──────────┘    └──────────┘    └────────┘  │
+│                                                                               │
+│    GA4            Data           Google          Apache         Marketing    │
+│    Ad Platforms   Pipeline       Cloud           Superset       Team         │
+│    Bank CSVs                                                                  │
+│                                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -24,9 +25,10 @@
 
 | Layer | Technology | What It Does |
 |-------|------------|--------------|
-| **Data Source** | Google Analytics 4 | Website tracking |
+| **Data Sources** | GA4, Ad Platforms, CSVs | Raw data |
+| **Data Ingestion** | Airbyte | ETL pipeline |
 | **Data Warehouse** | Google BigQuery | Storage & processing |
-| **Compute** | Google Cloud VM | Hosts the platform |
+| **Compute** | Google Cloud VM | Hosts all services |
 | **Visualization** | Apache Superset | Dashboards & reports |
 | **Automation** | Python + Cron | Daily data refresh |
 | **Version Control** | GitHub | Code backup |
@@ -37,7 +39,7 @@
 
 | Item | Count |
 |------|-------|
-| Cloud services | 3 |
+| Platform services | 4 (Airbyte, BigQuery, Superset, VM) |
 | Database tables | 11 |
 | Dashboards | 4 |
 | Charts | 25 |
@@ -66,8 +68,11 @@
 
 ## Access
 
-**URL:** http://34.66.133.243:8088  
-**GitHub:** github.com/harutdram/Ineco-Analytics
+| Service | URL |
+|---------|-----|
+| **Superset** | http://34.66.133.243:8088 |
+| **Airbyte** | http://34.66.133.243:8000 |
+| **GitHub** | github.com/harutdram/Ineco-Analytics |
 
 ---
 
