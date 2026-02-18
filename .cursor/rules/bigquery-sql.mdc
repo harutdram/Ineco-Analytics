@@ -1,0 +1,47 @@
+---
+description: BigQuery SQL conventions for Ineco data warehouse
+globs: "**/*.sql"
+alwaysApply: false
+---
+
+# BigQuery SQL Standards
+
+## Table References
+Always use fully qualified names:
+```sql
+-- ✅ GOOD
+SELECT * FROM `x-victor-477214-g0.ineco_marts.fact_sessions`
+
+-- ❌ BAD
+SELECT * FROM fact_sessions
+```
+
+## Safe Division
+Always use SAFE_DIVIDE to avoid division by zero:
+```sql
+-- ✅ GOOD
+SAFE_DIVIDE(clicks, impressions) * 100 as ctr
+
+-- ❌ BAD
+clicks / impressions * 100 as ctr
+```
+
+## Naming Conventions
+- Fact tables: `fact_*` (fact_sessions, fact_conversions)
+- Dimension tables: `dim_*` (dim_channel, dim_date)
+- Staging tables: `stg_*` (stg_events)
+- Raw tables: source name (ads_insights, bank_conversions)
+
+## Partitioning & Clustering
+For large fact tables:
+```sql
+CREATE TABLE `project.dataset.table`
+PARTITION BY date
+CLUSTER BY channel_group, product_category
+AS SELECT ...
+```
+
+## Date Handling
+- Use `DATE` type for date columns
+- Main date column: `date` or `event_date`
+- Filter pattern: `WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)`

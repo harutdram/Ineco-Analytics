@@ -1,0 +1,53 @@
+---
+description: Python data engineering conventions for BigQuery scripts
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python Data Scripts
+
+## BigQuery Client Setup
+```python
+from google.cloud import bigquery
+import os
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/Users/harut/Desktop/Ineco/credentials/bigquery-service-account.json'
+# Or on VM: '/home/harut/superset/credentials/bigquery-service-account.json'
+
+client = bigquery.Client(project='x-victor-477214-g0', location='EU')
+```
+
+## Query Execution Pattern
+```python
+def run_query(client, sql):
+    job = client.query(sql)
+    result = job.result()
+    logger.info(f"Processed {job.total_bytes_processed / 1e9:.2f} GB")
+    return result
+```
+
+## Error Handling
+Always log errors with context:
+```python
+try:
+    job.result()
+except Exception as e:
+    logger.error(f"Query failed: {e}")
+    raise
+```
+
+## Data Loading
+Use pandas for CSV/Excel to BigQuery:
+```python
+df = pd.read_csv('file.csv')
+job = client.load_table_from_dataframe(df, table_ref)
+job.result()
+```
+
+## Logging
+Use structured logging:
+```python
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+```

@@ -1,0 +1,34 @@
+---
+description: Ineco Bank Analytics Platform - Project context and architecture
+alwaysApply: true
+---
+
+# Ineco Analytics Platform
+
+## Project Overview
+Marketing analytics platform for Ineco Bank (Armenia) with:
+- **BigQuery** data warehouse (project: `x-victor-477214-g0`)
+- **Apache Superset** dashboards (VM: `34.66.133.243`)
+- **Airbyte** for Facebook Ads ETL
+- **Google Ads Data Transfer** for Google Ads
+
+## Architecture (Medallion)
+```
+Raw (ineco_raw)     → Staging (ineco_staging) → Marts (ineco_marts)
+- Google Ads p_ads_*   - stg_events              - fact_sessions
+- Facebook ads_insights - stg_bank_conversions   - fact_conversions
+- bank_conversions                                - fact_bank_conversions
+                                                  - fact_ad_spend
+```
+
+## Key Files
+- `bigquery/refresh_marts.py` - Daily mart refresh script
+- `scripts/load_bank_data.py` - Bank CSV ingestion
+- `scripts/data_quality_tests.py` - Automated data checks
+- `credentials/bigquery-service-account.json` - GCP credentials
+
+## Conventions
+- BigQuery project: `x-victor-477214-g0`
+- Datasets: `ineco_raw`, `ineco_staging`, `ineco_marts`
+- Use `SAFE_DIVIDE()` for calculations
+- AMD currency (Armenian Dram), USD to AMD rate: 400
