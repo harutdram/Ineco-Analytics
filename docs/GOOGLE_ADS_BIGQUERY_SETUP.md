@@ -213,13 +213,29 @@ FROM `x-victor-477214-g0.ineco_marts.fact_ad_spend_google`;
 
 ---
 
-## Action Items for Ineco IT
+## Status: COMPLETED ✅
 
-- [ ] Provide Google Ads Customer ID
-- [ ] Grant BigQuery admin access to person setting up transfer
-- [ ] Authorize the connection with Google Ads admin account
-- [ ] Run initial backfill (last 90 days recommended)
-- [ ] Confirm data appears in BigQuery
+**Setup completed on Feb 18, 2026:**
+- ✅ Data Transfer configured and authorized
+- ✅ 20+ tables created in `ineco_raw`
+- ✅ Customer account data syncing (1 row)
+- ⏳ Campaign data will appear when campaigns are launched
+
+**Tables ready:**
+- `p_ads_CampaignStats_8656917454`
+- `p_ads_Campaign_8656917454`
+- `p_ads_Customer_8656917454`
+- And 17+ more...
+
+## When Campaigns Launch
+
+Data will flow automatically every 24 hours. To create the mart tables:
+
+```bash
+cd /Users/harut/Desktop/Ineco
+bq query --use_legacy_sql=false < bigquery/marts/fact_ad_spend_google.sql
+bq query --use_legacy_sql=false < bigquery/marts/fact_ad_spend_unified.sql
+```
 
 ---
 

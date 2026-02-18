@@ -451,6 +451,68 @@ def refresh_marts(full_rebuild: bool = False):
             logger.error(f"  ✗ {fact_name}: {str(e)}")
             error_count += 1
     
+    # Refresh Ad Spend (Google Ads + Facebook)
+    logger.info("\n--- Ad Spend Tables ---")
+    try:
+        # Google Ads mart
+        logger.info("Refreshing fact_ad_spend_google...")
+        google_ads_sql = """
+        CREATE OR REPLACE TABLE `{project}.ineco_marts.fact_ad_spend_google` AS
+        SELECT
+          _DATA_DATE as date,
+          'Google Ads' as channel_group,
+          campaign_name as campaign,
+          ad_group_name as ad_group,
+          CAST(impressions AS FLOAT64) as impressions,
+          CAST(clicks AS FLOAT64) as clicks,
+          CAST(cost_micros AS FLOAT64) / 1000000 as spend_usd,
+          (CAST(cost_micros AS FLOAT64) / 1000000) * 400 as spend_amd,
+          SAFE_DIVIDE(CAST(clicks AS FLOAT64), CAST(impressions AS FLOAT64)) * 100 as ctr,
+          SAFE_DIVIDE(CAST(cost_micros AS FLOAT64) / 1000000, CAST(clicks AS FLOAT64)) as cpc,
+          SAFE_DIVIDE(CAST(cost_micros AS FLOAT64) / 1000000, CAST(impressions AS FLOAT64)) * 1000 as cpm,
+          CAST(conversions AS FLOAT64) as conversions,
+          SAFE_DIVIDE(CAST(cost_micros AS FLOAT64) / 1000000, NULLIF(CAST(conversions AS FLOAT64), 0)) as cost_per_conversion
+        FROM `{project}.ineco_raw.p_ads_CampaignStats_8656917454`
+        WHERE _DATA_DATE IS NOT NULL
+        """.format(project=PROJECT_ID)
+        job = client.query(google_ads_sql)
+        job.result()
+        google_rows = get_table_row_count(client, 'fact_ad_spend_google')
+        logger.info(f"  ✓ fact_ad_spend_google: {google_rows:,} rows")
+        
+        # Unified ad spend
+        logger.info("Refreshing fact_ad_spend (unified)...")
+        unified_sql = """
+        CREATE OR REPLACE TABLE `{project}.ineco_marts.fact_ad_spend` AS
+        SELECT date, channel_group, campaign, ad_group, impressions, clicks,
+               spend_usd, spend_amd, ctr, cpc, cpm, conversions, cost_per_conversion
+        FROM `{project}.ineco_marts.fact_ad_spend_google`
+        WHERE date IS NOT NULL
+        UNION ALL
+        SELECT 
+          DATE(date_start) as date,
+          'Meta Ads' as channel_group,
+          campaign_name as campaign,
+          adset_name as ad_group,
+          CAST(impressions AS FLOAT64),
+          CAST(clicks AS FLOAT64),
+          CAST(spend AS FLOAT64),
+          CAST(spend AS FLOAT64) * 400,
+          SAFE_DIVIDE(CAST(clicks AS FLOAT64), CAST(impressions AS FLOAT64)) * 100,
+          SAFE_DIVIDE(CAST(spend AS FLOAT64), CAST(clicks AS FLOAT64)),
+          SAFE_DIVIDE(CAST(spend AS FLOAT64), CAST(impressions AS FLOAT64)) * 1000,
+          0, 0
+        FROM `{project}.ineco_raw.ads_insights`
+        WHERE date_start IS NOT NULL
+        """.format(project=PROJECT_ID)
+        job = client.query(unified_sql)
+        job.result()
+        unified_rows = get_table_row_count(client, 'fact_ad_spend')
+        logger.info(f"  ✓ fact_ad_spend: {unified_rows:,} rows")
+        success_count += 2
+    except Exception as e:
+        logger.warning(f"  ⚠ Ad spend tables: {str(e)} (may be no data yet)")
+    
     # Quality checks
     qc_results = run_quality_checks(client)
     
