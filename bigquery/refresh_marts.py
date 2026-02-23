@@ -525,7 +525,7 @@ def refresh_marts(full_rebuild: bool = False):
           event_date as date, channel_group, COALESCE(campaign, '(not set)') as campaign, device_category,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'page_view' AND product_category = 'Consumer Loans' THEN user_pseudo_id END) as step1_pageview,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_apply_click' THEN user_pseudo_id END) as step2_apply_click,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_otp_requested' THEN user_pseudo_id END) as step3_otp_requested,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_sub_id_captured' THEN user_pseudo_id END) as step3_sub_id_captured,
           COUNT(DISTINCT CASE WHEN event_name_clean IN ('sprint_phone_submitted', 'sprint_login_via_mobile') THEN user_pseudo_id END) as step4_phone_login,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_click' THEN user_pseudo_id END) as step5_check_limit,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_completed' AND NOT is_test_event THEN user_pseudo_id END) as step6_completed
@@ -545,7 +545,7 @@ def refresh_marts(full_rebuild: bool = False):
         SELECT
           event_date as date, channel_group, COALESCE(campaign, '(not set)') as campaign, product_category, device_category,
           COUNT(DISTINCT CASE WHEN event_name_clean IN ('reg_apply_click', 'cards_apply_click') THEN user_pseudo_id END) as step1_apply_click,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_otp_requested' THEN user_pseudo_id END) as step2_otp_requested,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_sub_id_captured' THEN user_pseudo_id END) as step2_sub_id_captured,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_phone_submitted' THEN user_pseudo_id END) as step3_phone_submitted,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_ssn_submitted' THEN user_pseudo_id END) as step4_ssn_submitted,
           COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_email_verified' THEN user_pseudo_id END) as step5_email_verified,
