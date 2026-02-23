@@ -512,7 +512,56 @@ def refresh_marts(full_rebuild: bool = False):
         success_count += 2
     except Exception as e:
         logger.warning(f"  ⚠ Ad spend tables: {str(e)} (may be no data yet)")
-    
+
+    # Refresh Funnel Tables
+    logger.info("\n--- Funnel Tables ---")
+    try:
+        # Loans Funnel
+        logger.info("Refreshing funnel_loans...")
+        loans_sql = """
+        CREATE OR REPLACE TABLE `{project}.ineco_marts.funnel_loans` 
+        PARTITION BY date CLUSTER BY channel_group AS
+        SELECT
+          event_date as date, channel_group, COALESCE(campaign, '(not set)') as campaign, device_category,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'page_view' AND product_category = 'Consumer Loans' THEN user_pseudo_id END) as step1_pageview,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_apply_click' THEN user_pseudo_id END) as step2_apply_click,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_otp_requested' THEN user_pseudo_id END) as step3_otp_requested,
+          COUNT(DISTINCT CASE WHEN event_name_clean IN ('sprint_phone_submitted', 'sprint_login_via_mobile') THEN user_pseudo_id END) as step4_phone_login,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_click' THEN user_pseudo_id END) as step5_check_limit,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_completed' AND NOT is_test_event THEN user_pseudo_id END) as step6_completed
+        FROM `{project}.ineco_staging.stg_events_clean`
+        WHERE product_category = 'Consumer Loans' OR flow_type = 'Sprint'
+        GROUP BY 1, 2, 3, 4
+        """.format(project=PROJECT_ID)
+        job = client.query(loans_sql)
+        job.result()
+        logger.info(f"  ✓ funnel_loans: {get_table_row_count(client, 'funnel_loans'):,} rows")
+
+        # Registration Funnel
+        logger.info("Refreshing funnel_registration...")
+        reg_sql = """
+        CREATE OR REPLACE TABLE `{project}.ineco_marts.funnel_registration` 
+        PARTITION BY date CLUSTER BY channel_group, product_category AS
+        SELECT
+          event_date as date, channel_group, COALESCE(campaign, '(not set)') as campaign, product_category, device_category,
+          COUNT(DISTINCT CASE WHEN event_name_clean IN ('reg_apply_click', 'cards_apply_click') THEN user_pseudo_id END) as step1_apply_click,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_otp_requested' THEN user_pseudo_id END) as step2_otp_requested,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_phone_submitted' THEN user_pseudo_id END) as step3_phone_submitted,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_ssn_submitted' THEN user_pseudo_id END) as step4_ssn_submitted,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_email_verified' THEN user_pseudo_id END) as step5_email_verified,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'kyc_started' THEN user_pseudo_id END) as step6_kyc_started,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_completed' THEN user_pseudo_id END) as step7_completed
+        FROM `{project}.ineco_staging.stg_events_clean`
+        WHERE product_category IN ('Cards', 'Deposits', 'Homepage') OR flow_type = 'Registration'
+        GROUP BY 1, 2, 3, 4, 5
+        """.format(project=PROJECT_ID)
+        job = client.query(reg_sql)
+        job.result()
+        logger.info(f"  ✓ funnel_registration: {get_table_row_count(client, 'funnel_registration'):,} rows")
+        success_count += 2
+    except Exception as e:
+        logger.warning(f"  ⚠ Funnel tables: {str(e)}")
+
     # Quality checks
     qc_results = run_quality_checks(client)
     
