@@ -520,21 +520,19 @@ def refresh_marts(full_rebuild: bool = False):
     # Refresh Funnel Tables
     logger.info("\n--- Funnel Tables ---")
     try:
-        # Loans Funnel (8 steps matching CSV)
+        # Loans Funnel (6 steps as per Ineco feedback)
         logger.info("Refreshing funnel_loans...")
         loans_sql = """
         CREATE OR REPLACE TABLE `{project}.ineco_marts.funnel_loans`
         PARTITION BY date CLUSTER BY channel_group AS
         SELECT
           event_date as date, channel_group, COALESCE(campaign, '(not set)') as campaign, device_category,
-          COUNT(DISTINCT CASE WHEN event_name = 'page_view' AND product_category = 'Consumer Loans' THEN user_pseudo_id END) as step1_pageview,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_apply_click' THEN user_pseudo_id END) as step2_apply_click,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_sub_id_captured' THEN user_pseudo_id END) as step3_sub_id_captured,
-          COUNT(DISTINCT CASE WHEN event_name_clean IN ('sprint_phone_submitted', 'sprint_login_via_mobile') THEN user_pseudo_id END) as step4_phone_login,
-          COUNT(DISTINCT CASE WHEN event_name IN ('sprint_login_success', 'sprint_login_mobile_success') THEN user_pseudo_id END) as step5_login_success,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_ssn_submitted' THEN user_pseudo_id END) as step6_ssn_submitted,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_click' THEN user_pseudo_id END) as step7_check_limit_click,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_completed' AND NOT is_test_event THEN user_pseudo_id END) as step8_completed
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_apply_click' THEN user_pseudo_id END) as step1_apply_click,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_sub_id_captured' THEN user_pseudo_id END) as step2_sub_id_captured,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_open_personal_account' THEN user_pseudo_id END) as step3_open_account,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_ssn_submitted' THEN user_pseudo_id END) as step4_ssn_submitted,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_click' THEN user_pseudo_id END) as step5_check_limit,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_completed' AND NOT is_test_event THEN user_pseudo_id END) as step6_completed
         FROM `{project}.ineco_staging.stg_events_clean`
         WHERE product_category = 'Consumer Loans' OR flow_type = 'Sprint'
         GROUP BY 1, 2, 3, 4
@@ -543,23 +541,18 @@ def refresh_marts(full_rebuild: bool = False):
         job.result()
         logger.info(f"  ✓ funnel_loans: {get_table_row_count(client, 'funnel_loans'):,} rows")
 
-        # Registration Funnel (10 steps matching CSV)
+        # Registration Funnel (5 steps as per Ineco feedback)
         logger.info("Refreshing funnel_registration...")
         reg_sql = """
         CREATE OR REPLACE TABLE `{project}.ineco_marts.funnel_registration`
         PARTITION BY date CLUSTER BY channel_group, product_category AS
         SELECT
           event_date as date, channel_group, COALESCE(campaign, '(not set)') as campaign, product_category, device_category,
-          COUNT(DISTINCT CASE WHEN event_name = 'page_view' AND product_category IN ('Cards', 'Deposits') THEN user_pseudo_id END) as step1_pageview,
-          COUNT(DISTINCT CASE WHEN event_name_clean IN ('reg_apply_click', 'cards_apply_click') THEN user_pseudo_id END) as step2_apply_click,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_sub_id_captured' THEN user_pseudo_id END) as step3_sub_id_captured,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_phone_submitted' THEN user_pseudo_id END) as step4_phone_submitted,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_ssn_submitted' THEN user_pseudo_id END) as step5_ssn_submitted,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_email_verified' THEN user_pseudo_id END) as step6_email_verified,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'kyc_started' THEN user_pseudo_id END) as step7_kyc_started,
-          COUNT(DISTINCT CASE WHEN event_name = 'kyc_qr_shown' THEN user_pseudo_id END) as step8_kyc_qr_shown,
-          COUNT(DISTINCT CASE WHEN event_name = 'kyc_qr_scanned' THEN user_pseudo_id END) as step9_kyc_qr_scanned,
-          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_completed' THEN user_pseudo_id END) as step10_completed
+          COUNT(DISTINCT CASE WHEN event_name_clean IN ('reg_apply_click', 'cards_apply_click') THEN user_pseudo_id END) as step1_apply_click,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_sub_id_captured' THEN user_pseudo_id END) as step2_sub_id_captured,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_phone_submitted' THEN user_pseudo_id END) as step3_phone_submitted,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'kyc_started' THEN user_pseudo_id END) as step4_kyc_started,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_completed' THEN user_pseudo_id END) as step5_completed
         FROM `{project}.ineco_staging.stg_events_clean`
         WHERE product_category IN ('Cards', 'Deposits', 'Homepage') OR flow_type = 'Registration'
         GROUP BY 1, 2, 3, 4, 5
@@ -567,7 +560,42 @@ def refresh_marts(full_rebuild: bool = False):
         job = client.query(reg_sql)
         job.result()
         logger.info(f"  ✓ funnel_registration: {get_table_row_count(client, 'funnel_registration'):,} rows")
-        success_count += 2
+        
+        # Funnel Summary (true unique users for KPIs)
+        logger.info("Refreshing funnel_summary...")
+        summary_sql = """
+        CREATE OR REPLACE TABLE `{project}.ineco_marts.funnel_summary` AS
+        SELECT
+          'Loans' as funnel_type,
+          DATE_TRUNC(CURRENT_DATE(), MONTH) as period_start,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_apply_click' THEN user_pseudo_id END) as loans_apply,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_sub_id_captured' THEN user_pseudo_id END) as loans_sub_id,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_open_personal_account' THEN user_pseudo_id END) as loans_open_acc,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_ssn_submitted' THEN user_pseudo_id END) as loans_ssn,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_click' THEN user_pseudo_id END) as loans_check_limit,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'sprint_check_limit_completed' AND NOT is_test_event THEN user_pseudo_id END) as loans_completed,
+          NULL as reg_apply, NULL as reg_sub_id, NULL as reg_phone, NULL as reg_kyc, NULL as reg_completed
+        FROM `{project}.ineco_staging.stg_events_clean`
+        WHERE event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+          AND (product_category = 'Consumer Loans' OR flow_type = 'Sprint')
+        UNION ALL
+        SELECT
+          'Registration' as funnel_type,
+          DATE_TRUNC(CURRENT_DATE(), MONTH) as period_start,
+          NULL, NULL, NULL, NULL, NULL, NULL,
+          COUNT(DISTINCT CASE WHEN event_name_clean IN ('reg_apply_click', 'cards_apply_click') THEN user_pseudo_id END) as reg_apply,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_sub_id_captured' THEN user_pseudo_id END) as reg_sub_id,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_phone_submitted' THEN user_pseudo_id END) as reg_phone,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'kyc_started' THEN user_pseudo_id END) as reg_kyc,
+          COUNT(DISTINCT CASE WHEN event_name_clean = 'reg_completed' THEN user_pseudo_id END) as reg_completed
+        FROM `{project}.ineco_staging.stg_events_clean`
+        WHERE event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+          AND (product_category IN ('Cards', 'Deposits', 'Homepage') OR flow_type = 'Registration')
+        """.format(project=PROJECT_ID)
+        job = client.query(summary_sql)
+        job.result()
+        logger.info(f"  ✓ funnel_summary: {get_table_row_count(client, 'funnel_summary'):,} rows")
+        success_count += 3
     except Exception as e:
         logger.warning(f"  ⚠ Funnel tables: {str(e)}")
 
