@@ -1,1 +1,46 @@
 <script src="/static/assets/custom/custom.js"></script>
+<style>
+/* ==========================================
+   Custom Ineco Loading Animation (240x4 ratio)
+   ========================================== */
+
+/* CHART LOADING - Replace the loading image with proper aspect ratio */
+.loading img,
+.chart-loading img,
+img[src*="loading"] {
+  width: 180px !important;
+  height: 3px !important;
+  object-fit: contain !important;
+}
+
+/* ANT DESIGN SPINNERS - Convert to horizontal bar */
+.ant-spin-dot {
+  width: 180px !important;
+  height: 3px !important;
+  background: url("/static/assets/custom/loading_new.gif") no-repeat center center !important;
+  background-size: contain !important;
+  animation: none !important;
+  transform: none !important;
+  border-radius: 2px !important;
+}
+
+.ant-spin-dot-item {
+  display: none !important;
+}
+
+/* Global loading wrapper */
+.loading-wrapper,
+.loading-container {
+  background: url("/static/assets/custom/loading_new.gif") no-repeat center center !important;
+  background-size: 180px 3px !important;
+}
+
+/* Explore/Chart page loading */
+.explore-chart .loading,
+.slice-container .loading,
+.chart-container .loading,
+.dashboard-component-chart-holder .loading {
+  background: url("/static/assets/custom/loading_new.gif") no-repeat center center !important;
+  background-size: 150px 2.5px !important;
+}
+</style>

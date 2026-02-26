@@ -53,6 +53,8 @@ services:
       - ./credentials:/app/credentials:ro
       - ./assets:/app/superset/static/assets/custom:ro
       - ./assets/inecobank_logo.png:/app/superset/static/assets/images/superset-logo-horiz.png:ro
+      - ./assets/loading_new.gif:/app/superset/static/assets/images/loading.gif:ro
+      - ./assets/loading_new.gif:/app/superset/static/assets/loading.cff8a5da.gif:ro
       - ./templates/tail_js_custom_extra.html:/app/superset/templates/tail_js_custom_extra.html:ro
       - superset_home:/app/superset_home
     command: >
